@@ -20,17 +20,32 @@ STRAIGHT_ADJ = 1.25
 def drive(left_speed, right_speed):
     left_drive.start(left_speed * LEFT_DIRECTION)
     right_drive.start(right_speed * RIGHT_DIRECTION)
-def lift(speed):
-    arm.start(speed)
-
+    
 try:
-    while left_sensor.value == 1 and right_sensor.value == 1:
-        print(left_sensor.value, right_sensor.value)
-        drive(20,20)
-    time.sleep(10)
-    lift(10)
-    time.sleep(2)
-    arm.stop()
+    start_time = time.monotonic()
+    white_since = None
+    while True:
+        left_black = left_sensor.value == 1
+        right_black = right_sensor.value == 1 
+        print("Left ", left_sensor.value, "Right ", right_sensor.value)
+        drive(20, 20)
+        
+        if left_black and right_black:
+            drive(30, 30)
+        elif left_black:
+            drive(-15, 30)
+        elif right_black:
+            drive(30, -15)
+        else:
+            if white_since == None:
+                white_since = time.monotonic()
+        
+        current_time = time.monotonic()
+        # stop while arm is unloading
+        if current_time - start_time >= 5:
+            arm.start(30)
+            time.sleep(3)
+            arm.stop()
 
 except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
