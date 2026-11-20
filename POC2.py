@@ -25,27 +25,27 @@ try:
     start_time = time.monotonic()
     white_since = None
     while True:
-        left_black = left_sensor.value == 1
-        right_black = right_sensor.value == 1 
+        left_black = (left_sensor.value == 1)
+        right_black = (right_sensor.value == 1)
         print("Left ", left_sensor.value, "Right ", right_sensor.value)
         drive(20, 20)
         
         if left_black and right_black:
             drive(30, 30)
         elif left_black:
-            drive(-15, 30)
+            drive(20, 30)
         elif right_black:
-            drive(30, -15)
+            drive(30, 20)
         else:
-            if white_since == None:
-                white_since = time.monotonic()
-        
-        current_time = time.monotonic()
+            white_since = time.monotonic()
+            current_time = time.monotonic()
+            if time.monotonic() - white_since >= 3:
+                print("White detected for 3 seconds. Stopping.")
         # stop while arm is unloading
-        if current_time - start_time >= 5:
-            arm.start(30)
-            time.sleep(3)
-            arm.stop()
+            elif current_time - start_time >= 5:
+                arm.start(30)
+                time.sleep(3)
+                arm.stop()
 
 except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
