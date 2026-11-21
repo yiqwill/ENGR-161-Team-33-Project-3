@@ -28,7 +28,7 @@ def drive(left_speed, right_speed):
     left_drive.start(left_speed * LEFT_DIRECTION)
     right_drive.start(right_speed * RIGHT_DIRECTION)
     
-def stop():
+def stop_motors():
     left_drive.stop()
     right_drive.stop()
     arm.stop()
@@ -67,24 +67,22 @@ try:
             drive(*command)
             last_command = command
             
-        if start_time - now >= eject_time and not cargo_ejected:
-            print(f"{eject_time} seconds passed. Ejecting cargo...")
+        if not cargo_ejected and (now - start_time >= eject_time or drop_off_detected):
+            print(f"Ejecting cargo... Hall Sensor? {drop_off_detected}")
+            stop_motors()
+
             arm.start(arm_speed)
             time.sleep(arm_lift_time)
+            arm.stop()
+
             cargo_ejected = True
-        elif drop_off_detected and not cargo_ejected:
-            print("Hall sensor magnetic field detected. Ejecting cargo...")
-            arm.start(arm_speed)
-            time.sleep(arm_lift_time)
-            cargo_ejected = True
-        
-            
-        
-            
+            last_command = None
+            white_since = None
+         
 except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
 finally:
     # Always stop both motors
-    stop()
+    stop_motors()
 
 
