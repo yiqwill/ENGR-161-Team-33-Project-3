@@ -15,11 +15,19 @@ LEFT_DIRECTION = -1
 RIGHT_DIRECTION = 1
 
 STRAIGHT_ADJ = 1.25
+left_straight = 10
+right_straight = 10
+turn_drop = 10
 
 # positive values - go forward
 def drive(left_speed, right_speed):
     left_drive.start(left_speed * LEFT_DIRECTION)
     right_drive.start(right_speed * RIGHT_DIRECTION)
+    
+def stop():
+    left_drive.stop()
+    right_drive.stop()
+    arm.stop()
     
 try:
     start_time = time.monotonic()
@@ -31,16 +39,17 @@ try:
         drive(20, 20)
         
         if left_black and right_black:
-            drive(30, 30)
+            drive(left_straight, right_straight)
         elif left_black:
-            drive(20, 30)
+            drive(left_straight - turn_drop, right_straight)
         elif right_black:
-            drive(30, 20)
+            drive(left_straight, right_straight - turn_drop)
         else:
             white_since = time.monotonic()
             current_time = time.monotonic()
             if time.monotonic() - white_since >= 3:
                 print("White detected for 3 seconds. Stopping.")
+                stop()
         # stop while arm is unloading
             elif current_time - start_time >= 5:
                 arm.start(30)
@@ -51,7 +60,6 @@ except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
 finally:
     # Always stop both motors
-    left_drive.stop()
-    right_drive.stop()
+    stop()
 
 
