@@ -15,9 +15,9 @@ hall_sensor = HallSensor(26)
 LEFT_DIRECTION = -1
 RIGHT_DIRECTION = 1
 
-left_straight = 10
-right_straight = 10
-turn_drop = 10
+left_straight = 20
+right_straight = 20
+turn_drop = 20
 arm_speed = -100
 gap_time = 5
 eject_time = 10
@@ -54,18 +54,20 @@ try:
                 white_since = now
             
             if now - white_since >= gap_time:
+                print("Line lost.")
                 break #lost the line
             
-        if left_black == right_black:
+        if left_black and right_black:
             command = (left_straight, right_straight)
         elif left_black:
             command = (left_straight - turn_drop, right_straight)
-        else:
+        elif right_black:
             command = (left_straight, right_straight - turn_drop)
 
         if command != last_command:
             drive(*command)
             last_command = command
+            time.sleep(0.2)
             
         if not cargo_ejected and (now - start_time >= eject_time or drop_off_detected):
             print(f"Ejecting cargo... Hall Sensor? {drop_off_detected}")

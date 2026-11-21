@@ -37,6 +37,7 @@ try:
     arm.start(arm_speed)
     time.sleep(arm_lift_time)
     arm.stop()
+    
     while True:
         
         left_black = (left_sensor.value == 1)
