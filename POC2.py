@@ -15,11 +15,13 @@ hall_sensor = HallSensor(26)
 LEFT_DIRECTION = -1
 RIGHT_DIRECTION = 1
 
-STRAIGHT_ADJ = 1.25
 left_straight = 10
 right_straight = 10
 turn_drop = 10
+arm_speed = -100
 gap_time = 5
+eject_time = 10
+arm_lift_time = 3
 
 # positive values - go forward
 def drive(left_speed, right_speed):
@@ -34,19 +36,20 @@ def stop():
 try:
     start_time = time.monotonic()
     white_since = None
+    last_command = None
+    cargo_ejected = False
     while True:
         
         left_black = (left_sensor.value == 1)
         right_black = (right_sensor.value == 1)
         drop_off_detected = (hall_sensor.value == 1)
+        now = time.monotonic()
         
         print("Left ", left_sensor.value, "Right ", right_sensor.value, "Hall ", hall_sensor.value)
         
         if left_black or right_black:
             white_since = None
         else:
-            now = time.monotonic()
-            
             if white_since is None:
                 white_since = now
             
@@ -63,6 +66,20 @@ try:
         if command != last_command:
             drive(*command)
             last_command = command
+            
+        if start_time - now >= eject_time and not cargo_ejected:
+            print(f"{eject_time} seconds passed. Ejecting cargo...")
+            arm.start(arm_speed)
+            time.sleep(arm_lift_time)
+            cargo_ejected = True
+        elif drop_off_detected and not cargo_ejected:
+            print("Hall sensor magnetic field detected. Ejecting cargo...")
+            arm.start(arm_speed)
+            time.sleep(arm_lift_time)
+            cargo_ejected = True
+        
+            
+        
             
 except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
