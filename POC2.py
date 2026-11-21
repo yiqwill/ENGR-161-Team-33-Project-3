@@ -1,6 +1,6 @@
 from buildhat import Motor
 from basehat import LineFinder
-
+from basehat import HallSensor
 import time
 
 #CONFIRMED
@@ -10,6 +10,7 @@ arm = Motor('D')
 
 left_sensor = LineFinder(24)
 right_sensor = LineFinder(22)
+hall_sensor = HallSensor(26)
 
 LEFT_DIRECTION = -1
 RIGHT_DIRECTION = 1
@@ -18,6 +19,7 @@ STRAIGHT_ADJ = 1.25
 left_straight = 10
 right_straight = 10
 turn_drop = 10
+gap_time = 5
 
 # positive values - go forward
 def drive(left_speed, right_speed):
@@ -33,29 +35,35 @@ try:
     start_time = time.monotonic()
     white_since = None
     while True:
+        
         left_black = (left_sensor.value == 1)
         right_black = (right_sensor.value == 1)
-        print("Left ", left_sensor.value, "Right ", right_sensor.value)
-        drive(20, 20)
+        drop_off_detected = (hall_sensor.value == 1)
         
-        if left_black and right_black:
-            drive(left_straight, right_straight)
-        elif left_black:
-            drive(left_straight - turn_drop, right_straight)
-        elif right_black:
-            drive(left_straight, right_straight - turn_drop)
+        print("Left ", left_sensor.value, "Right ", right_sensor.value, "Hall ", hall_sensor.value)
+        
+        if left_black or right_black:
+            white_since = None
         else:
-            white_since = time.monotonic()
-            current_time = time.monotonic()
-            if time.monotonic() - white_since >= 3:
-                print("White detected for 3 seconds. Stopping.")
-                stop()
-        # stop while arm is unloading
-            elif current_time - start_time >= 5:
-                arm.start(30)
-                time.sleep(3)
-                arm.stop()
+            now = time.monotonic()
+            
+            if white_since is None:
+                white_since = now
+            
+            if now - white_since >= gap_time:
+                break #lost the line
+            
+        if left_black == right_black:
+            command = (left_straight, right_straight)
+        elif left_black:
+            command = (left_straight - turn_drop, right_straight)
+        else:
+            command = (left_straight, right_straight - turn_drop)
 
+        if command != last_command:
+            drive(*command)
+            last_command = command
+            
 except KeyboardInterrupt:
     print("You pressed ctrl+C. Program terminating.")
 finally:
